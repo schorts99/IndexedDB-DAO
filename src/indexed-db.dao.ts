@@ -10,6 +10,7 @@ import {
 
 import { IndexedDBUnitOfWork } from "./indexex-db.unit-of-work";
 import { IndexedDBCriteriaQueryExecutor } from "./indexed-db.criteria-query-executor";
+import { DBNotInitialized } from "./exceptions";
 
 export class IndexedDBDAO<
   M extends Model,
@@ -31,14 +32,21 @@ export class IndexedDBDAO<
     return new Promise((resolve, reject) => {
       const request = indexedDB.open(dbName, 1);
 
-      request.onupgradeneeded = () => {
+      request.onsuccess = () => {
         const db = request.result;
 
         if (!db.objectStoreNames.contains(this.storeName)) {
-          db.createObjectStore(this.storeName, { keyPath: "id" });
+          reject(
+            new DBNotInitialized(
+              `Object store "${this.storeName}" not found in database "${dbName}". Did you run the initializer or bump the version?`
+            )
+          );
+
+          return;
         }
+
+        resolve(db);
       };
-      request.onsuccess = () => resolve(request.result);
       request.onerror = () => reject(request.error);
     });
   }
