@@ -115,7 +115,7 @@ export class IndexedDBDAO<
       ? uow.getStore(this.storeName)
       : (await this.dbPromise).transaction(this.storeName, "readwrite").objectStore(this.storeName);
 
-    store.add(entity);
+    store.add(entity.toPrimitives());
 
     return entity;
   }
@@ -125,7 +125,7 @@ export class IndexedDBDAO<
       ? uow.getStore(this.storeName)
       : (await this.dbPromise).transaction(this.storeName, "readwrite").objectStore(this.storeName);
 
-    store.put(entity);
+    store.put(entity.toPrimitives());
 
     return entity;
   }
@@ -160,7 +160,7 @@ export class IndexedDBDAO<
       : (await this.dbPromise).transaction(this.storeName, "readwrite").objectStore(this.storeName);
 
     for (const e of entities) {
-      store.put(e);
+      store.put(e.toPrimitives());
     }
 
     return entities;
