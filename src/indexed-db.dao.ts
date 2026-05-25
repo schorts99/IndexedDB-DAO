@@ -13,9 +13,8 @@ import { IndexedDBCriteriaQueryExecutor } from "./indexed-db.criteria-query-exec
 
 export class IndexedDBDAO<
   M extends Model,
-  Entity extends BaseEntity<ValueObject, M>,
-  ID = Entity["id"]["value"]
-> extends DAO<M, Entity, ID> {
+  Entity extends BaseEntity<ValueObject, M>
+> extends DAO<M, Entity> {
   private dbPromise: Promise<IDBDatabase>;
 
   constructor(
@@ -86,7 +85,7 @@ export class IndexedDBDAO<
     return entities;
   }
 
-  async findByID(id: ID, uow?: IndexedDBUnitOfWork): Promise<Entity | null> {
+  async findByID(id: Entity["id"]["value"], uow?: IndexedDBUnitOfWork): Promise<Entity | null> {
     const db = uow ? null : await this.dbPromise;
 
     return new Promise((resolve, reject) => {
@@ -140,13 +139,13 @@ export class IndexedDBDAO<
 
       await this.update(entity, uow);
     } else {
-      await this.deleteByID(entity.id.value as ID, uow);
+      await this.deleteByID(entity.id.value, uow);
     }
 
     return entity;
   }
 
-  async deleteByID(id: ID, uow?: IndexedDBUnitOfWork): Promise<void> {
+  async deleteByID(id: Entity["id"]["value"], uow?: IndexedDBUnitOfWork): Promise<void> {
     const store = uow
       ? uow.getStore(this.storeName)
       : (await this.dbPromise).transaction(this.storeName, "readwrite").objectStore(this.storeName);
