@@ -8,8 +8,9 @@
     # pkgs.go
     # pkgs.python311
     # pkgs.python311Packages.pip
-    # pkgs.nodejs_22
+    pkgs.nodejs
     # pkgs.nodePackages.nodemon
+    pkgs.gh
   ];
   # Sets environment variables in the workspace
   env = {};
