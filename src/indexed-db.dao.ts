@@ -17,6 +17,7 @@ export class IndexedDBDAO<
   Entity extends BaseEntity<ValueObject, M>
 > extends DAO<M, Entity> {
   private dbPromise: Promise<IDBDatabase>;
+  private channel: BroadcastChannel;
 
   constructor(
     dbName: string,
@@ -26,6 +27,12 @@ export class IndexedDBDAO<
     super(deleteMode);
 
     this.dbPromise = this.openDB(dbName);
+    this.channel = new BroadcastChannel(dbName);
+    this.channel.onmessage = async (event) => {
+      if (event.data?.action === "close-db") {
+        this.dbPromise.then((db) => db.close());
+      }
+    };
   }
 
   private openDB(dbName: string): Promise<IDBDatabase> {
@@ -205,11 +212,5 @@ export class IndexedDBDAO<
     const all = await this.getAll(uow);
 
     return IndexedDBCriteriaQueryExecutor.execute<Entity>(all, criteria).length > 0;
-  }
-
-  async close(): Promise<void> {
-    const db = await this.dbPromise;
-
-    db.close();
   }
 }
