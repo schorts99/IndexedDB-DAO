@@ -206,4 +206,10 @@ export class IndexedDBDAO<
 
     return IndexedDBCriteriaQueryExecutor.execute<Entity>(all, criteria).length > 0;
   }
+
+  async close(): Promise<void> {
+    const db = await this.dbPromise;
+
+    db.close();
+  }
 }
