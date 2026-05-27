@@ -187,11 +187,11 @@ export class IndexedDBDAO<
     return entity;
   }
 
-  async search(criteria: Criteria, uow?: IndexedDBUnitOfWork): Promise<Entity[] | null> {
+  async search(criteria: Criteria, uow?: IndexedDBUnitOfWork): Promise<Entity[]> {
     const all = await this.getAll(uow);
     const filtered = IndexedDBCriteriaQueryExecutor.execute<Entity>(all, criteria);
 
-    return filtered
+    return filtered;
   }
 
   async findOneBy(criteria: Criteria, uow?: IndexedDBUnitOfWork): Promise<Entity | null> {
