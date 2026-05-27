@@ -5,3 +5,4 @@ export { IndexedDBUnitOfWork } from "./indexex-db.unit-of-work";
 export { EntityRegistry } from "@schorts/shared-kernel";
 export { IndexedDBInitializer } from "./indexed-db.initializer";
 export { IndexedDBManager } from "./indexed-db.manager";
+export { IndexedDBOfflineStore } from "./indexed-db.offline-store";

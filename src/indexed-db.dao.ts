@@ -38,7 +38,6 @@ export class IndexedDBDAO<
   private openDB(dbName: string): Promise<IDBDatabase> {
     return new Promise((resolve, reject) => {
       const request = indexedDB.open(dbName, 1);
-
       request.onsuccess = () => {
         const db = request.result;
 

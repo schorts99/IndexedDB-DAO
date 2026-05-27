@@ -70,6 +70,7 @@ class MyEntityDAO extends IndexedDBDAO<MyEntityModel, MyEntity> {
     super("MyDatabase", "my-entities");
   }
 }
+
 ```
 
 ### 3. Use the DAO for CRUD and Criteria
