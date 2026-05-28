@@ -1,4 +1,9 @@
-import { OfflineStore, OfflinePayload } from "@schorts/shared-kernel";
+import {
+  OfflineStore,
+  OfflinePayload,
+  PascalCamelToSnake,
+  SnakeToCamel,
+} from "@schorts/shared-kernel";
 
 import { DBNotInitialized } from "./exceptions";
 
@@ -44,8 +49,15 @@ export class IndexedDBOfflineStore<T = OfflinePayload> implements OfflineStore<T
   async enqueue(key: string, payload: T): Promise<void> {
     const db = await this.dbPromise;
     const tx = db.transaction(this.storeName, "readwrite");
+    let formattedPayload = payload;
+    
+    if (payload && typeof payload === "object") {
+      if ("meta" in payload) {
+        formattedPayload = PascalCamelToSnake.formatObject(formattedPayload);
+      }
+    }
 
-    tx.objectStore(this.storeName).put({ key, payload });
+    tx.objectStore(this.storeName).put({ key, payload: formattedPayload });
   }
 
   async list(): Promise<Array<{ key: string; payload: T }>> {
@@ -54,7 +66,24 @@ export class IndexedDBOfflineStore<T = OfflinePayload> implements OfflineStore<T
     return new Promise((resolve, reject) => {
       const tx = db.transaction(this.storeName, "readonly");
       const request = tx.objectStore(this.storeName).getAll();
-      request.onsuccess = () => resolve(request.result);
+      request.onsuccess = () => {
+        const formattedResult = request.result.map((item: { key: string; payload: T }) => {
+          let formattedPayload = item.payload;
+
+          if (item.payload && typeof item.payload === "object") {
+            if ("meta" in item.payload) {
+              formattedPayload = SnakeToCamel.formatObject(item.payload);
+            }
+          }
+
+          return {
+            key: item.key,
+            payload: formattedPayload,
+          };
+        });
+
+        resolve(formattedResult);
+      };
       request.onerror = () => reject(request.error);
     });
   }
