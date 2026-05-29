@@ -1,15 +1,21 @@
-import { Criteria } from "@schorts/shared-kernel";
+import { Criteria, ValueObject, Entity as BaseEntity, Model } from "@schorts/shared-kernel";
 
 export class IndexedDBCriteriaQueryExecutor {
-  static execute<Entity>(
+  static execute<Entity extends BaseEntity<ValueObject, Model>>(
     entities: Entity[],
     criteria: Criteria,
   ): Entity[] {
     let results = [...entities];
 
     for (const { field, operator, value } of criteria.filters) {
-      results = results.filter((entity: Entity) => {
-        const fieldValue = entity[field as keyof Entity];
+      results = results.filter((entity) => {
+        let fieldValue: any = entity[field as keyof Entity];
+
+        if (fieldValue && typeof fieldValue === "object") {
+          if ("value" in fieldValue) {
+            fieldValue = fieldValue.value;
+          }
+        }
 
         switch (operator) {
           case "EQUAL": return fieldValue === value;
