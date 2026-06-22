@@ -10,61 +10,23 @@ import {
 
 import { IndexedDBUnitOfWork } from "./indexex-db.unit-of-work";
 import { IndexedDBCriteriaQueryExecutor } from "./indexed-db.criteria-query-executor";
-import { DBNotInitialized } from "./exceptions";
 
 export class IndexedDBDAO<
   M extends Model,
   Entity extends BaseEntity<ValueObject, M>
 > extends DAO<M, Entity> {
-  private dbPromise: Promise<IDBDatabase>;
-  private channel: BroadcastChannel;
 
   constructor(
-    dbName: string,
+    private readonly db: Promise<IDBDatabase>,
     private readonly storeName: string,
     deleteMode: DeleteMode = "HARD"
   ) {
     super(deleteMode);
-
-    this.dbPromise = this.openDB(dbName);
-    this.channel = new BroadcastChannel(dbName);
-    this.channel.onmessage = async (event) => {
-      if (event.data?.action === "close-db") {
-        this.dbPromise.then((db) => {
-          db.close();
-          this.channel.postMessage({ action: "db-closed" });
-        });
-      }
-    };
-  }
-
-  private openDB(dbName: string): Promise<IDBDatabase> {
-    return new Promise((resolve, reject) => {
-      const request = indexedDB.open(dbName, 1);
-      request.onsuccess = () => {
-        const db = request.result;
-
-        if (!db.objectStoreNames.contains(this.storeName)) {
-          reject(
-            new DBNotInitialized(
-              `Object store "${this.storeName}" not found in database "${dbName}". Did you run the initializer or bump the version?`
-            )
-          );
-
-          return;
-        }
-
-        resolve(db);
-      };
-      request.onerror = () => reject(request.error);
-    });
   }
 
   private async rawGetAll(): Promise<M[]> {
-    const db = await this.dbPromise;
-
-    return new Promise((resolve, reject) => {
-      const tx = db.transaction(this.storeName, "readonly");
+    return new Promise(async (resolve, reject) => {
+      const tx = (await this.db).transaction(this.storeName, "readonly");
       const store = tx.objectStore(this.storeName);
       const request = store.getAll();
 
@@ -103,12 +65,10 @@ export class IndexedDBDAO<
   }
 
   async findByID(id: Entity["id"]["value"], uow?: IndexedDBUnitOfWork): Promise<Entity | null> {
-    const db = uow ? null : await this.dbPromise;
-
-    return new Promise((resolve, reject) => {
+    return new Promise(async (resolve, reject) => {
       const store = uow
         ? uow.getStore(this.storeName)
-        : db!.transaction(this.storeName, "readonly").objectStore(this.storeName);
+        : (await this.db).transaction(this.storeName, "readonly").objectStore(this.storeName);
       const request = store.get(id as any);
       request.onsuccess = () => {
         if (request.result) {
@@ -129,7 +89,7 @@ export class IndexedDBDAO<
   async create(entity: Entity, uow?: IndexedDBUnitOfWork): Promise<Entity> {
     const store = uow
       ? uow.getStore(this.storeName)
-      : (await this.dbPromise).transaction(this.storeName, "readwrite").objectStore(this.storeName);
+      : (await this.db).transaction(this.storeName, "readwrite").objectStore(this.storeName);
 
     store.add(entity.toPrimitives());
 
@@ -139,7 +99,7 @@ export class IndexedDBDAO<
   async update(entity: Entity, uow?: IndexedDBUnitOfWork): Promise<Entity> {
     const store = uow
       ? uow.getStore(this.storeName)
-      : (await this.dbPromise).transaction(this.storeName, "readwrite").objectStore(this.storeName);
+      : (await this.db).transaction(this.storeName, "readwrite").objectStore(this.storeName);
 
     store.put(entity.toPrimitives());
 
@@ -165,7 +125,7 @@ export class IndexedDBDAO<
   async deleteByID(id: Entity["id"]["value"], uow?: IndexedDBUnitOfWork): Promise<void> {
     const store = uow
       ? uow.getStore(this.storeName)
-      : (await this.dbPromise).transaction(this.storeName, "readwrite").objectStore(this.storeName);
+      : (await this.db).transaction(this.storeName, "readwrite").objectStore(this.storeName);
 
     store.delete(id as any);
   }
@@ -173,7 +133,7 @@ export class IndexedDBDAO<
   async saveMany(entities: Entity[], uow?: IndexedDBUnitOfWork): Promise<Entity[]> {
     const store = uow
       ? uow.getStore(this.storeName)
-      : (await this.dbPromise).transaction(this.storeName, "readwrite").objectStore(this.storeName);
+      : (await this.db).transaction(this.storeName, "readwrite").objectStore(this.storeName);
 
     for (const e of entities) {
       store.put(e.toPrimitives());
