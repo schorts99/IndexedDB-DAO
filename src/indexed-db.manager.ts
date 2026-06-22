@@ -1,8 +1,16 @@
 export class IndexedDBManager {
-  static close(dbName: string) {
-    const channel = new BroadcastChannel(dbName);
+  static close(dbName: string): Promise<void> {
+    return new Promise((resolve) => {
+      const channel = new BroadcastChannel(dbName);
 
-    channel.postMessage({ action: "close-db" });
+      channel.postMessage({ action: "close-db" });
+      channel.onmessage = (event) => {
+        if (event.data?.action === "db-closed") {
+          channel.close();
+          resolve();
+        }
+      };
+    });
   }
 
   static delete(dbName: string): Promise<void> {
@@ -11,7 +19,7 @@ export class IndexedDBManager {
     return new Promise((resolve, reject) => {
       request.onsuccess = () => resolve();
       request.onerror = () => reject();
-      request.onblocked = () => reject();
+      request.onblocked = () => reject(new Error("Deletion blocked"));
     });
   }
 }
