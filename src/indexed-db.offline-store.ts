@@ -19,7 +19,10 @@ export class IndexedDBOfflineStore<T = OfflinePayload> implements OfflineStore<T
     this.channel = new BroadcastChannel(dbName);
     this.channel.onmessage = async (event) => {
       if (event.data?.action === "close-db") {
-        this.dbPromise.then((db) => db.close());
+        this.dbPromise.then((db) => {
+          db.close();
+          this.channel.postMessage({ action: "db-closed" });
+        });
       }
     };
   }
