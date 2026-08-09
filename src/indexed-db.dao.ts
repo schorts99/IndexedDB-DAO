@@ -41,7 +41,7 @@ export class IndexedDBDAO<
         const store = uow.getStore(this.storeName);
         const request = store.getAll();
         request.onsuccess = () => {
-          const entities = request.result.map((model: M) => 
+          const entities = request.result.map((model: M) =>
             EntityRegistry.fromPrimitives(
               this.storeName,
               model,
@@ -54,7 +54,7 @@ export class IndexedDBDAO<
       });
     }
 
-    const entities = (await this.rawGetAll()).map((model: M) => 
+    const entities = (await this.rawGetAll()).map((model: M) =>
       EntityRegistry.fromPrimitives(
         this.storeName,
         model,
@@ -162,6 +162,12 @@ export class IndexedDBDAO<
     const filtered = IndexedDBCriteriaQueryExecutor.execute<Entity>(all, criteria);
 
     return filtered[0] ?? null;
+  }
+
+  async count(uow?: IndexedDBUnitOfWork): Promise<number> {
+    const all = await this.getAll(uow);
+
+    return all.length;
   }
 
   async countBy(criteria: Criteria, uow?: IndexedDBUnitOfWork): Promise<number> {

@@ -9,7 +9,7 @@ This module provides a type‑safe, domain‑driven abstraction over `IndexedDB`
 This package has a peer dependency on [`@schorts/shared-kernel`](https://www.npmjs.com/package/@schorts/shared-kernel).
 
 ```bash
-npm install @schorts/indexeddb-dao @schorts/shared-kernel
+npm install @schorts/indexed-db-dao @schorts/shared-kernel
 ```
 
 ## Usage
